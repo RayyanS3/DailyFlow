@@ -7,18 +7,36 @@
 
 import SwiftUI
 
+// MARK: - Data Model
+struct CardObject: Identifiable {
+    let id = UUID()
+    var name: String
+    var dueDate: String
+}
+
 struct ContentView: View {
+    @State private var tasks: [CardObject] = [
+        CardObject(name: "Example Task 1", dueDate: "Tomorrow"),
+        CardObject(name: "Example Task 2", dueDate: "Next Week")
+    ]
+
     var body: some View {
         NavigationView {
             ZStack {
-                // Background color fills entire screen
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                // Center the card vertically
                 VStack {
-                    Spacer()
-                    TaskCardView()   // Our custom card
+                    // Scrollable list of cards
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(tasks) { card in
+                                TaskCardView(card: card)
+                            }
+                        }
+                        .padding(.top, 16)
+                    }
+
                     Spacer()
                 }
 
@@ -28,7 +46,12 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Handle new task creation here in future
+                            // Add a new card with default or generated values
+                            let newCard = CardObject(
+                                name: "Task #\(tasks.count + 1)",
+                                dueDate: "No Date"
+                            )
+                            tasks.append(newCard)
                         }) {
                             Image(systemName: "plus")
                                 .font(.title)
@@ -50,6 +73,8 @@ struct ContentView: View {
 
 // MARK: - Task Card View
 struct TaskCardView: View {
+    let card: CardObject
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -57,15 +82,15 @@ struct TaskCardView: View {
                 .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
 
             VStack(spacing: 8) {
-                Text("Task Title")
+                Text(card.name)
                     .font(.headline)
-                Text("Due Date: Tomorrow")
+                Text("Due Date: \(card.dueDate)")
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
             .padding()
         }
-        .frame(width: 300, height: 150)
+        .frame(width: 350, height: 100)
     }
 }
 
