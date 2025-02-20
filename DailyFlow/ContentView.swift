@@ -5,6 +5,13 @@
 //  Created by Rayyan Suhail on 2025-02-19.
 //
 
+//
+//  ContentView.swift
+//  DailyFlow
+//
+//  Created by Rayyan Suhail on 2025-02-19.
+//
+
 import SwiftUI
 
 // MARK: - Data Model
@@ -58,19 +65,19 @@ struct ContentView: View {
                 // Main scrollable area
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Progress summary card
+                        // Updated progress summary card
                         progressSummaryCard
                             .padding(.horizontal)
                         
-                        // "Today’s Task" + "See All" + horizontal filter
+                        // "Today’s Tasks:" label + horizontal filter row
                         VStack(spacing: 8) {
-                            // Header Row
                             HStack {
                                 Text("Today’s Tasks:")
                                     .font(.headline)
                                 
                                 Spacer()
                                 
+                                // Horizontal filter row
                                 HStack(spacing: 16) {
                                     ForEach(HorizontalFilter.allCases, id: \.self) { filter in
                                         Button(action: {
@@ -79,17 +86,16 @@ struct ContentView: View {
                                             Text(filter.rawValue)
                                                 .font(.subheadline)
                                                 .foregroundColor(
-                                                    horizontalFilter == filter ? .blue : .gray
+                                                    horizontalFilter == filter
+                                                    ? AppColors.colorTwo
+                                                    : .gray
                                                 )
                                         }
                                     }
                                 }
                                 .padding(.horizontal)
-                               
                             }
                             .padding(.horizontal)
-                            
-
                         }
                         
                         // Vertical list of filtered tasks
@@ -198,7 +204,7 @@ struct ContentView: View {
                     Image(systemName: "bell.square")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 35 , height: 35)
+                        .frame(width: 35, height: 35)
                         .tint(.white)
                 }
             }
@@ -210,9 +216,39 @@ struct ContentView: View {
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
     
-    // MARK: - Progress Summary Card
+    // MARK: - RingView (Donut Chart for Progress)
+    struct RingView: View {
+        let progress: Double        // 0.0 → 1.0
+        let lineWidth: CGFloat
+        let foregroundColor: Color
+        let backgroundColor: Color
+
+        var body: some View {
+            ZStack {
+                Circle()
+                    .stroke(
+                        backgroundColor,
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                    )
+                Circle()
+                    .trim(from: 0, to: CGFloat(min(progress, 1.0)))
+                    .stroke(
+                        foregroundColor,
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+            }
+        }
+    }
+
+    // MARK: - Enhanced Progress Summary Card
     private var progressSummaryCard: some View {
-        ZStack(alignment: .topLeading) {
+        let total   = tasks.count
+        let done    = tasks.filter { $0.isComplete }.count
+        let pending = total - done
+        let ratio   = completionRatio // e.g., done/total
+
+        return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
@@ -225,27 +261,66 @@ struct ContentView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(height: 140)
+                .frame(height: 180) // a bit taller to fit extra stats
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Today’s progress summary")
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.9))
 
-                Text("\(tasks.count) Tasks")
-                    .font(.headline)
-                    .bold()
-                    .foregroundColor(.white)
-                
-                // Example: dynamic ratio
-                HStack(spacing: 8) {
-                    ProgressView(value: completionRatio)
-                        .tint(.white)
-                        .frame(width: 120)
-                    Text("\(Int(completionRatio * 100))%")
-                        .font(.subheadline)
-                        .foregroundColor(.white)
+                HStack(spacing: 16) {
+                    // Donut chart
+                    ZStack {
+                        RingView(
+                            progress: ratio,
+                            lineWidth: 8,
+                            foregroundColor: .white,
+                            backgroundColor: .white.opacity(0.3)
+                        )
+                        .frame(width: 60, height: 60)
+
+                        // Show % in the center
+                        Text("\(Int(ratio * 100))%")
+                            .font(.footnote)
+                            .foregroundColor(.white)
+                    }
+
+                    // Stats breakdown
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Total: ")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.8))
+                            Text("\(total)")
+                                .font(.footnote).bold()
+                                .foregroundColor(.white)
+                        }
+                        HStack {
+                            Text("Done: ")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.8))
+                            Text("\(done)")
+                                .font(.footnote).bold()
+                                .foregroundColor(.white)
+                        }
+                        HStack {
+                            Text("Pending: ")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.8))
+                            Text("\(pending)")
+                                .font(.footnote).bold()
+                                .foregroundColor(.white)
+                        }
+                    }
                 }
+
+                Divider()
+                    .background(Color.white.opacity(0.3))
+                    .padding(.vertical, 4)
+
+                Text("Tasks completed this week: 12") // Placeholder
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.9))
             }
             .padding(.leading, 16)
             .padding(.top, 16)
@@ -276,8 +351,6 @@ struct ContentView: View {
     // MARK: - Bottom Navigation Bar
     private var bottomNavBar: some View {
         ZStack(alignment: .bottom) {
-            
-            
             // Center Add Task button
             VStack {
                 Button(action: {
@@ -313,6 +386,7 @@ struct SwipableTaskRow: View {
                 .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
 
             HStack {
+                // Left icon
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.white)
                     .frame(width: 40, height: 40)
