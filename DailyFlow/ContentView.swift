@@ -23,18 +23,28 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
+                // A subtle gradient background
+                LinearGradient(
+                    gradient: Gradient(colors: [Color(.systemGray6), Color(.systemGray5)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 VStack {
                     // Scrollable list of cards
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 20) {
                             ForEach(tasks) { card in
-                                TaskCardView(card: card)
+                                // Pass a closure to delete the card back to ContentView
+                                TaskCardView(card: card) {
+                                    // Remove this card from tasks array
+                                    tasks.removeAll { $0.id == card.id }
+                                }
                             }
                         }
-                        .padding(.top, 16)
+                        .padding(.top, 20)
+                        .padding(.horizontal, 16)
                     }
                     Spacer()
                 }
@@ -45,7 +55,7 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Add a new card with default or generated values
+                            // Add a new card
                             let newCard = CardObject(
                                 name: "Task #\(tasks.count + 1)",
                                 dueDate: "No Date"
@@ -60,7 +70,8 @@ struct ContentView: View {
                                 .clipShape(Circle())
                                 .shadow(radius: 5)
                         }
-                        .padding()
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
                     }
                 }
             }
@@ -73,25 +84,45 @@ struct ContentView: View {
 // MARK: - Task Card View
 struct TaskCardView: View {
     let card: CardObject
+    // This closure lets us signal the parent view to delete this card
+    let onDelete: () -> Void
 
     // Tracks the card’s position as the user drags/swipes
     @State private var offset: CGSize = .zero
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .leading) {
+            // Left accent bar for style / priority cue
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.blue.opacity(0.2)) // subtle fill color
+                .frame(width: 6)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.leading, 8)
+
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white)
+                .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
 
-            VStack(spacing: 8) {
-                Text(card.name)
-                    .font(.headline)
-                Text("Due Date: \(card.dueDate)")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+            // Card Content
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(card.name)
+                        .font(.headline)
+                    HStack {
+                        Image(systemName: "calendar")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text(card.dueDate)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding([.leading, .vertical], 12)
+
+                Spacer()
             }
-            .padding()
         }
-        .frame(width: 375, height: 100)
+        .frame(width: 350, height: 80)
         // Move the card based on the current horizontal drag offset only
         .offset(x: offset.width, y: offset.height)
         .gesture(
@@ -112,13 +143,17 @@ struct TaskCardView: View {
                         print("Left swiped: \(card.name)")
                         // Handle left swipe action
                     }
-                    
+
                     // Animate card back to original position
                     withAnimation {
                         offset = .zero
                     }
                 }
         )
+        // Long press to delete
+        .onLongPressGesture {
+            onDelete()
+        }
     }
 }
 
