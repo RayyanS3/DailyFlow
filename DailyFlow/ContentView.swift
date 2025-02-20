@@ -229,10 +229,10 @@ struct ContentView: View {
                 
                 // Example progress info (static 0.4 = 40%)
                 HStack(spacing: 8) {
-                    ProgressView(value: 0.4)
+                    ProgressView(value: completionRatio)
                         .tint(.white)
                         .frame(width: 120)
-                    Text("40%")
+                    Text("\(Int(completionRatio * 100))%")
                         .font(.subheadline)
                         .foregroundColor(.white)
                 }
@@ -240,6 +240,13 @@ struct ContentView: View {
             .padding(.leading, 16)
             .padding(.top, 16)
         }
+    }
+    
+    private var completionRatio: Double {
+        guard !tasks.isEmpty else { return 0 }
+        let completedCount = tasks.filter { $0.isComplete }.count
+        let totalCount = tasks.count
+        return Double(completedCount) / Double(totalCount)
     }
     
     // MARK: - Determine Icon for Priority
@@ -260,29 +267,6 @@ struct ContentView: View {
     private var bottomNavBar: some View {
         ZStack(alignment: .bottom) {
             // White background bar
-            HStack {
-                Button(action: {
-                    // Home
-                }) {
-                    Image(systemName: "house.fill")
-                        .font(.body)
-                        .foregroundColor(.gray)
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    // Profile
-                }) {
-                    Image(systemName: "person.crop.circle")
-                        .font(.body)
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.horizontal, 40)
-            .frame(height: 56)
-            .background(Color.white)
-            .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -2)
             
             // Center floating Add button
             VStack {
@@ -293,12 +277,11 @@ struct ContentView: View {
                         .foregroundColor(.white)
                         .font(.title)
                         .frame(width: 60, height: 60)
-                        .background(Color.blue)
+                        .background(AppColors.colorTwo)
                         .clipShape(Circle())
                         .shadow(radius: 5)
                 }
             }
-            .offset(y: -23)
         }
     }
 }
