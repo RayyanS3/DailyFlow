@@ -19,16 +19,15 @@ struct CardObject: Identifiable {
     var isComplete: Bool = false
 }
 
-// MARK: - Task Filter Enum
-enum TaskFilter: String, CaseIterable {
+// MARK: - Horizontal Filter Enum
+enum HorizontalFilter: String, CaseIterable {
     case all = "All"
-    case complete = "Complete"
-    case incomplete = "Incomplete"
+    case done = "Done"
+    case pending = "Pending"
 }
 
-// MARK: - Main Content View
 struct ContentView: View {
-    // Sample tasks to demonstrate filtering & logic
+    // Sample tasks
     @State private var tasks: [CardObject] = [
         CardObject(name: "UI Design", dueDate: "09:00 AM - 11:00 AM",
                    priority: "Medium", notes: "", isComplete: false),
@@ -40,12 +39,12 @@ struct ContentView: View {
                    priority: "Medium", notes: "", isComplete: false)
     ]
     
-    // Controls whether the "Add Task" sheet is shown
+    // Controls the presentation of the "Add Task" sheet
     @State private var showingAddTaskView = false
     
-    // Tracks which filter is currently selected
-    @State private var selectedFilter: TaskFilter = .all
-    
+    // Tracks which filter is currently selected in the horizontal row
+    @State private var horizontalFilter: HorizontalFilter = .all
+
     var body: some View {
         ZStack {
             // Background color
@@ -53,48 +52,72 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                // Top navigation bar (profile, title, notifications)
                 topNavBar
                 
                 // Main scrollable area
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Gradient summary card
+                        // Progress summary card
                         progressSummaryCard
                             .padding(.horizontal)
                         
-                        // Filter Picker + Task Rows
-                        VStack(spacing: 16) {
-                            filterSegmentedControl
-                                .padding(.horizontal)
-                            
-                            // Swipable list of tasks
-                            VStack(spacing: 12) {
-                                ForEach(filteredTasks()) { task in
-                                    SwipableTaskRow(
-                                        task: task,
-                                        icon: iconForPriority(task.priority),
-                                        onSwipeLeft: { swipedTask in
-                                            handleLeftSwipe(swipedTask)
-                                        },
-                                        onSwipeRight: { swipedTask in
-                                            // Mark as complete (unchanged)
-                                            markTaskComplete(swipedTask)
+                        // "Today’s Task" + "See All" + horizontal filter
+                        VStack(spacing: 8) {
+                            // Header Row
+                            HStack {
+                                Text("Today’s Tasks:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                HStack(spacing: 16) {
+                                    ForEach(HorizontalFilter.allCases, id: \.self) { filter in
+                                        Button(action: {
+                                            horizontalFilter = filter
+                                        }) {
+                                            Text(filter.rawValue)
+                                                .font(.subheadline)
+                                                .foregroundColor(
+                                                    horizontalFilter == filter ? .blue : .gray
+                                                )
                                         }
-                                    )
+                                    }
                                 }
+                                .padding(.horizontal)
+                               
                             }
                             .padding(.horizontal)
+                            
+
+                        }
+                        
+                        // Vertical list of filtered tasks
+                        VStack(spacing: 12) {
+                            ForEach(filteredTasks()) { task in
+                                SwipableTaskRow(
+                                    task: task,
+                                    icon: iconForPriority(task.priority),
+                                    onSwipeLeft: { swipedTask in
+                                        handleLeftSwipe(swipedTask)
+                                    },
+                                    onSwipeRight: { swipedTask in
+                                        markTaskComplete(swipedTask)
+                                    }
+                                )
+                                .padding(.horizontal)
+                            }
                         }
                     }
                     .padding(.top, 16)
-                    .padding(.bottom, 80)  // extra space for bottom nav bar
+                    .padding(.bottom, 80) // Space for bottom nav bar
                 }
                 
-                // Bottom Navigation bar with a center add button
+                // Bottom bar (Home, Profile, Add Task button in center)
                 bottomNavBar
             }
         }
-        // Present AddTaskView as a sheet
+        // Sheet for adding a new task
         .sheet(isPresented: $showingAddTaskView) {
             AddTaskView { newTask in
                 tasks.append(newTask)
@@ -102,10 +125,21 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Logic for Left Swipe
+    // MARK: - Filtering Logic
+    private func filteredTasks() -> [CardObject] {
+        switch horizontalFilter {
+        case .all:
+            return tasks
+        case .done:
+            return tasks.filter { $0.isComplete }
+        case .pending:
+            return tasks.filter { !$0.isComplete }
+        }
+    }
+    
+    // MARK: - Left Swipe Logic
     private func handleLeftSwipe(_ swipedTask: CardObject) {
-        // If the task is already complete, mark it incomplete.
-        // Otherwise, move (snooze) it to the bottom.
+        // If task is complete, mark incomplete. Otherwise, "snooze" to bottom.
         if swipedTask.isComplete {
             markTaskIncomplete(swipedTask)
         } else {
@@ -120,89 +154,65 @@ struct ContentView: View {
     }
     
     private func snoozeTask(_ swipedTask: CardObject) {
-        // Move the swiped task to the bottom of the list
         if let index = tasks.firstIndex(where: { $0.id == swipedTask.id }) {
             let snoozedTask = tasks.remove(at: index)
             tasks.append(snoozedTask)
         }
     }
     
-    // MARK: - Filtered Tasks
-    private func filteredTasks() -> [CardObject] {
-        switch selectedFilter {
-        case .all:
-            return tasks
-        case .complete:
-            return tasks.filter { $0.isComplete }
-        case .incomplete:
-            return tasks.filter { !$0.isComplete }
-        }
-    }
-    
-    // MARK: - Mark Task Complete (Right Swipe)
+    // MARK: - Right Swipe Logic
     private func markTaskComplete(_ swipedTask: CardObject) {
-        // Find it in tasks and set isComplete = true
         if let index = tasks.firstIndex(where: { $0.id == swipedTask.id }) {
             tasks[index].isComplete = true
         }
-    }
-    
-    // MARK: - Segmented Control
-    private var filterSegmentedControl: some View {
-        Picker("TaskFilter", selection: $selectedFilter) {
-            ForEach(TaskFilter.allCases, id: \.self) { filterCase in
-                Text(filterCase.rawValue).tag(filterCase)
-            }
-        }
-        .pickerStyle(SegmentedPickerStyle())
     }
     
     // MARK: - Top Navigation Bar
     private var topNavBar: some View {
         ZStack {
             HStack {
-                // Profile (left side)
+                // Left side (profile)
                 Button(action: {
                     // your action
                 }) {
-                    Image("user-profile-icon")
+                    Image(systemName: "person.crop.square")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 45, height: 45)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+                        .frame(width: 35, height: 35)
+                        .tint(.white)
                 }
                 
                 Spacer()
 
-                // Title
-                Text("Homepage")
+                Text("DailyFlow")
                     .font(.headline)
+                    .padding(.top, 10)
+                    .foregroundStyle(Color.white)
                 
                 Spacer()
                 
-                // Notifications (right side)
+                // Right side (notifications)
                 Button(action: {
                     // your action
                 }) {
-                    Image("gradient-outline-bell")
+                    Image(systemName: "bell.square")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 45, height: 40)
+                        .frame(width: 35 , height: 35)
+                        .tint(.white)
                 }
             }
             .padding(.horizontal, 30)
-            .padding(.top, -10)
-            .padding(.bottom, 10)
+            .padding(.top, -15)
+            .padding(.bottom, 15)
         }
-        .background(Color.white)
+        .background(AppColors.colorTwo)
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
     
     // MARK: - Progress Summary Card
     private var progressSummaryCard: some View {
         ZStack(alignment: .topLeading) {
-            // Multi-stop gradient
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
@@ -227,7 +237,7 @@ struct ContentView: View {
                     .bold()
                     .foregroundColor(.white)
                 
-                // Example progress info (static 0.4 = 40%)
+                // Example: dynamic ratio
                 HStack(spacing: 8) {
                     ProgressView(value: completionRatio)
                         .tint(.white)
@@ -242,22 +252,22 @@ struct ContentView: View {
         }
     }
     
+    // MARK: - Completion Ratio
     private var completionRatio: Double {
         guard !tasks.isEmpty else { return 0 }
         let completedCount = tasks.filter { $0.isComplete }.count
-        let totalCount = tasks.count
-        return Double(completedCount) / Double(totalCount)
+        return Double(completedCount) / Double(tasks.count)
     }
     
-    // MARK: - Determine Icon for Priority
+    // MARK: - Icon for Priority
     private func iconForPriority(_ priority: String) -> Image {
         switch priority.lowercased() {
         case "high":
-            return Image("rocketHigh")   // Ensure rocketHigh is in Assets.xcassets
+            return Image("rocketHigh")
         case "medium":
-            return Image("baloonMed")    // Ensure baloonMed is in Assets.xcassets
+            return Image("baloonMed")
         case "low":
-            return Image("paperLow")     // Ensure paperLow is in Assets.xcassets
+            return Image("paperLow")
         default:
             return Image("paperLow")
         }
@@ -266,9 +276,9 @@ struct ContentView: View {
     // MARK: - Bottom Navigation Bar
     private var bottomNavBar: some View {
         ZStack(alignment: .bottom) {
-            // White background bar
             
-            // Center floating Add button
+            
+            // Center Add Task button
             VStack {
                 Button(action: {
                     showingAddTaskView = true
@@ -287,12 +297,10 @@ struct ContentView: View {
 }
 
 // MARK: - SwipableTaskRow
-/// Displays a row that can be swiped left or right to trigger actions.
 struct SwipableTaskRow: View {
     let task: CardObject
     let icon: Image
     
-    // Callbacks for each swipe direction
     var onSwipeLeft: (CardObject) -> Void
     var onSwipeRight: (CardObject) -> Void
     
@@ -305,7 +313,6 @@ struct SwipableTaskRow: View {
                 .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
 
             HStack {
-                // Left icon area
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.white)
                     .frame(width: 40, height: 40)
@@ -325,7 +332,6 @@ struct SwipableTaskRow: View {
                 }
                 Spacer()
                 
-                // If the task is complete, show a checkmark
                 if task.isComplete {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
@@ -342,11 +348,10 @@ struct SwipableTaskRow: View {
                     offset.width = gesture.translation.width
                 }
                 .onEnded { _ in
-                    // Check for threshold swipes
                     if offset.width > 100 {
-                        onSwipeRight(task)     // e.g., mark complete
+                        onSwipeRight(task)
                     } else if offset.width < -100 {
-                        onSwipeLeft(task)      // handle left logic
+                        onSwipeLeft(task)
                     }
                     withAnimation {
                         offset = .zero
@@ -358,7 +363,6 @@ struct SwipableTaskRow: View {
 
 // MARK: - AddTaskView
 struct AddTaskView: View {
-    // Callback that passes the new card back to ContentView
     var onSave: (CardObject) -> Void
     
     @State private var name: String = ""
