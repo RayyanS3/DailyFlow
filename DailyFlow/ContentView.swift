@@ -14,6 +14,20 @@
 
 import SwiftUI
 
+/// A button style that draws a white circular outline and dims on press.
+struct WhiteOutlineCircleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            // Slightly shrink and dim when pressed
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            // White circular outline
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 2)
+            )
+    }
+}
 // MARK: - Data Model
 struct CardObject: Identifiable {
     let id = UUID()
@@ -177,23 +191,15 @@ struct ContentView: View {
     private var topNavBar: some View {
         ZStack {
             HStack {
-                // Left side (profile)
-                Button(action: {
-                    // your action
-                }) {
-                    Image(systemName: "person.crop.square")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 35, height: 35)
-                        .tint(.white)
-                }
+                
                 
                 Spacer()
 
                 Text("DailyFlow")
                     .font(.headline)
-                    .padding(.top, 10)
+                    .padding(.leading, 20)
                     .foregroundStyle(Color.white)
+                    .offset(y: 10)
                 
                 Spacer()
                 
@@ -201,18 +207,26 @@ struct ContentView: View {
                 Button(action: {
                     // your action
                 }) {
-                    Image(systemName: "bell.square")
+                    Image(systemName: "bell")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 35, height: 35)
+                        .frame(width: 30, height: 30)
                         .tint(.white)
                 }
             }
-            .padding(.horizontal, 30)
-            .padding(.top, -15)
-            .padding(.bottom, 15)
+            .padding(.horizontal, 40)
+            .padding(.top, -20)
+            .padding(.bottom, 20)
         }
-        .background(AppColors.colorTwo)
+        .background(LinearGradient(
+            gradient: Gradient(colors: [
+                AppColors.colorOne,
+                AppColors.colorTwo,
+                AppColors.colorFour
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ))
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
     
@@ -265,54 +279,70 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("Today’s progress summary")
-                    .font(.subheadline)
+                    .font(.headline)
                     .foregroundColor(.white.opacity(0.9))
-
-                HStack(spacing: 16) {
-                    // Donut chart
-                    ZStack {
-                        RingView(
-                            progress: ratio,
-                            lineWidth: 8,
-                            foregroundColor: .white,
-                            backgroundColor: .white.opacity(0.3)
-                        )
-                        .frame(width: 60, height: 60)
-
-                        // Show % in the center
-                        Text("\(Int(ratio * 100))%")
-                            .font(.footnote)
-                            .foregroundColor(.white)
+                    .padding(.bottom, 5)
+                HStack(){
+                    HStack(spacing: 22) {
+                        // Donut chart
+                        ZStack {
+                            RingView(
+                                progress: ratio,
+                                lineWidth: 8,
+                                foregroundColor: .white,
+                                backgroundColor: .white.opacity(0.3)
+                            )
+                            .frame(width: 70, height: 70)
+                            
+                            // Show % in the center
+                            Text("\(Int(ratio * 100))%")
+                                .font(.footnote)
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Stats breakdown
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("Total: ")
+                                    .font(.footnote)
+                                    .foregroundColor(.white.opacity(0.8))
+                                Text("\(total)")
+                                    .font(.footnote).bold()
+                                    .foregroundColor(.white)
+                            }
+                            HStack {
+                                Text("Done: ")
+                                    .font(.footnote)
+                                    .foregroundColor(.white.opacity(0.8))
+                                Text("\(done)")
+                                    .font(.footnote).bold()
+                                    .foregroundColor(.white)
+                            }
+                            HStack {
+                                Text("Pending: ")
+                                    .font(.footnote)
+                                    .foregroundColor(.white.opacity(0.8))
+                                Text("\(pending)")
+                                    .font(.footnote).bold()
+                                    .foregroundColor(.white)
+                            }
+                        }
                     }
-
-                    // Stats breakdown
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Total: ")
-                                .font(.footnote)
-                                .foregroundColor(.white.opacity(0.8))
-                            Text("\(total)")
-                                .font(.footnote).bold()
-                                .foregroundColor(.white)
-                        }
-                        HStack {
-                            Text("Done: ")
-                                .font(.footnote)
-                                .foregroundColor(.white.opacity(0.8))
-                            Text("\(done)")
-                                .font(.footnote).bold()
-                                .foregroundColor(.white)
-                        }
-                        HStack {
-                            Text("Pending: ")
-                                .font(.footnote)
-                                .foregroundColor(.white.opacity(0.8))
-                            Text("\(pending)")
-                                .font(.footnote).bold()
-                                .foregroundColor(.white)
-                        }
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        // your action
+                    }) {
+                        Image("userImage")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 70, height: 70)
+                            .tint(.white)
+                            .padding(.horizontal, 35)
+                            .clipShape(.circle)
                     }
-                }
+                }.buttonStyle(WhiteOutlineCircleButtonStyle())
 
                 Divider()
                     .background(Color.white.opacity(0.3))
@@ -321,6 +351,7 @@ struct ContentView: View {
                 Text("Tasks completed this week: 12") // Placeholder
                     .font(.footnote)
                     .foregroundColor(.white.opacity(0.9))
+                    .offset(y: -3)
             }
             .padding(.leading, 16)
             .padding(.top, 16)
