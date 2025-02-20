@@ -59,13 +59,20 @@ struct ContentView: View {
                             }
                             .padding(.horizontal)
                             
-                            // List of tasks
+                            // Swipable list of tasks
                             VStack(spacing: 12) {
                                 ForEach(tasks) { task in
-                                    taskRow(
-                                        iconName: iconForPriority(task.priority),
-                                        title: task.name,
-                                        time: task.dueDate
+                                    SwipableTaskRow(
+                                        task: task,
+                                        icon: iconForPriority(task.priority),
+                                        onSwipeLeft: { swipedTask in
+                                            // Example: handle left swipe (e.g. snooze)
+                                            print("Left swipe on \(swipedTask.name)")
+                                        },
+                                        onSwipeRight: { swipedTask in
+                                            // Example: handle right swipe (e.g. mark completed)
+                                            print("Right swipe on \(swipedTask.name)")
+                                        }
                                     )
                                 }
                             }
@@ -93,16 +100,13 @@ struct ContentView: View {
         ZStack {
             HStack {
                 Button(action: {
-                                // Action for profile (e.g., open a user profile screen)
+                    // Action for profile (e.g., open a user profile screen)
                 }) {
-                    // Replace "profileIcon" with your local asset name,
-                    // or use systemName if you prefer SF Symbols.
                     Image("user-profile-icon")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 45, height: 45)
                         .clipShape(Circle())
-                        // Optional styling
                         .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
                 }
                 Spacer()
@@ -129,7 +133,6 @@ struct ContentView: View {
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
     
-    // MARK: - Progress Summary Card
     // MARK: - Progress Summary Card
     private var progressSummaryCard: some View {
         ZStack(alignment: .topLeading) {
@@ -173,46 +176,13 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Task Row
-    // Customize icons or colors based on priority, etc.
-    private func taskRow(iconName: Image, title: String, time: String) -> some View {
-        HStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white)
-                .frame(width: 40, height: 40)
-                .overlay(
-                    iconName
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 35, height: 35)
-                )
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline)
-                Text(time)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
-        }
-        .padding()
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
-    }
-    
-    // Decide which icon to display based on the priority string
+    // MARK: - Icon for Priority
     private func iconForPriority(_ priority: String) -> Image {
         switch priority.lowercased() {
             case "high":   return Image(.rocketHigh)
             case "medium": return Image(.baloonMed)
             case "low":    return Image(.paperLow)
-        default:
-            return Image(.paperLow)
+            default:       return Image(.paperLow)
         }
     }
     
@@ -221,7 +191,6 @@ struct ContentView: View {
         ZStack(alignment: .bottom) {
             // White background bar
             HStack {
-                // Placeholder icons for left / right items
                 Button(action: {
                     // Home
                 }) {
@@ -265,9 +234,82 @@ struct ContentView: View {
     }
 }
 
+// MARK: - SwipableTaskRow
+/// A row that can be dragged left or right.
+/// On a successful threshold swipe, calls onSwipeLeft or onSwipeRight.
+struct SwipableTaskRow: View {
+    let task: CardObject
+    let icon: Image
+    
+    // Optional callbacks for each swipe direction.
+    var onSwipeLeft: (CardObject) -> Void
+    var onSwipeRight: (CardObject) -> Void
+    
+    // Track the card’s horizontal offset as the user drags
+    @State private var offset: CGSize = .zero
+    
+    var body: some View {
+        ZStack {
+            // Background shape for the card
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
+
+            // Actual row content
+            HStack {
+                // Left icon
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white)
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        icon
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 30, height: 30)
+                    )
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(task.name)
+                        .font(.subheadline)
+                    Text(task.dueDate)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                Spacer()
+            }
+            .padding()
+        }
+        // Constrain the overall card size
+        .frame(height: 80)
+        // Offset the card horizontally based on drag
+        .offset(x: offset.width, y: 0)
+        // Add a drag gesture restricted to horizontal movement
+        .gesture(
+            DragGesture()
+                .onChanged { gesture in
+                    offset.width = gesture.translation.width
+                }
+                .onEnded { _ in
+                    // Check thresholds for a swipe
+                    if offset.width > 100 {
+                        // Swiped Right
+                        onSwipeRight(task)
+                    } else if offset.width < -100 {
+                        // Swiped Left
+                        onSwipeLeft(task)
+                    }
+                    
+                    // Animate back to center
+                    withAnimation {
+                        offset = .zero
+                    }
+                }
+        )
+    }
+}
+
 // MARK: - Add Task View
 struct AddTaskView: View {
-    // Callback that passes the new card back to ContentView
     var onSave: (CardObject) -> Void
     
     // Fields the user can edit
