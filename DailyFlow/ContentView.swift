@@ -36,7 +36,6 @@ struct ContentView: View {
                         }
                         .padding(.top, 16)
                     }
-
                     Spacer()
                 }
 
@@ -75,11 +74,13 @@ struct ContentView: View {
 struct TaskCardView: View {
     let card: CardObject
 
+    // Tracks the card’s position as the user drags/swipes
+    @State private var offset: CGSize = .zero
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white)
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
 
             VStack(spacing: 8) {
                 Text(card.name)
@@ -90,7 +91,30 @@ struct TaskCardView: View {
             }
             .padding()
         }
-        .frame(width: 350, height: 100)
+        // Adjust card size as desired
+        .frame(width: 375, height: 100)
+        // Move the card based on the current drag offset
+        .offset(x: offset.width, y: offset.height)
+        // Attach a DragGesture that updates offset and checks final position
+        .gesture(
+            DragGesture()
+                .onChanged { gesture in
+                    // Update offset as the user drags
+                    offset = gesture.translation
+                }
+                .onEnded { gesture in
+                    // Check if we swiped far enough to the right
+                    if offset.width > 100 {
+                        print("Right swiped: \(card.name)")
+                        // In future, you might remove this card from the list or trigger another action
+                    }
+                    
+                    // Animate back to original position
+                    withAnimation {
+                        offset = .zero
+                    }
+                }
+        )
     }
 }
 
