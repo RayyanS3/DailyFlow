@@ -91,25 +91,29 @@ struct TaskCardView: View {
             }
             .padding()
         }
-        // Adjust card size as desired
         .frame(width: 375, height: 100)
-        // Move the card based on the current drag offset
+        // Move the card based on the current horizontal drag offset only
         .offset(x: offset.width, y: offset.height)
-        // Attach a DragGesture that updates offset and checks final position
         .gesture(
             DragGesture()
                 .onChanged { gesture in
-                    // Update offset as the user drags
-                    offset = gesture.translation
+                    // Restrict movement to horizontal only
+                    offset.width = gesture.translation.width
+                    offset.height = 0
                 }
                 .onEnded { gesture in
                     // Check if we swiped far enough to the right
                     if offset.width > 100 {
                         print("Right swiped: \(card.name)")
-                        // In future, you might remove this card from the list or trigger another action
+                        // In future, remove the card or perform another action
+                    }
+                    // Check if we swiped far enough to the left
+                    else if offset.width < -100 {
+                        print("Left swiped: \(card.name)")
+                        // Handle left swipe action
                     }
                     
-                    // Animate back to original position
+                    // Animate card back to original position
                     withAnimation {
                         offset = .zero
                     }
