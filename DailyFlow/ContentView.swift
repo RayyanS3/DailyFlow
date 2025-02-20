@@ -12,13 +12,20 @@ struct CardObject: Identifiable {
     let id = UUID()
     var name: String
     var dueDate: String
+    var priority: String   // For example: "Low", "Medium", "High"
+    var notes: String
 }
 
 struct ContentView: View {
     @State private var tasks: [CardObject] = [
-        CardObject(name: "Example Task 1", dueDate: "Tomorrow"),
-        CardObject(name: "Example Task 2", dueDate: "Next Week")
+        CardObject(name: "Example Task 1", dueDate: "Tomorrow",
+                   priority: "Medium", notes: ""),
+        CardObject(name: "Example Task 2", dueDate: "Next Week",
+                   priority: "High", notes: "Finish slides for presentation")
     ]
+    
+    // This will toggle our sheet
+    @State private var showingAddTaskView = false
 
     var body: some View {
         NavigationView {
@@ -55,12 +62,7 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Add a new card
-                            let newCard = CardObject(
-                                name: "Task #\(tasks.count + 1)",
-                                dueDate: "No Date"
-                            )
-                            tasks.append(newCard)
+                            showingAddTaskView = true
                         }) {
                             Image(systemName: "plus")
                                 .font(.title)
@@ -77,27 +79,29 @@ struct ContentView: View {
             }
             .navigationTitle("SwipeList")
             .navigationBarTitleDisplayMode(.inline)
+            // Present the AddTaskView as a sheet
+            .sheet(isPresented: $showingAddTaskView) {
+                AddTaskView { newCard in
+                    // Append the newly created card
+                    tasks.append(newCard)
+                }
+            }
         }
     }
 }
 
-// MARK: - Task Card View
+// MARK: - Task Card View (Unchanged)
 struct TaskCardView: View {
     let card: CardObject
-    // This closure lets us signal the parent view to delete this card
     let onDelete: () -> Void
 
-    // Tracks the card’s position as the user drags/swipes
     @State private var offset: CGSize = .zero
-
-    // Tracks whether the user has triggered the "pending delete" state
     @State private var isPendingDelete: Bool = false
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Left accent bar for style / priority cue
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.blue.opacity(0.2)) // subtle fill color
+                .fill(Color.blue.opacity(0.2))
                 .frame(width: 6)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .padding(.leading, 8)
@@ -105,67 +109,62 @@ struct TaskCardView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white)
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
-                // Red border & scale effect if card is pending deletion
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(isPendingDelete ? Color.red : Color.clear, lineWidth: 3)
                 )
                 .scaleEffect(isPendingDelete ? 1.05 : 1.0)
 
-            // Card Content
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(card.name)
-                        .font(.headline)
-                    HStack {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text(card.dueDate)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
+            VStack(alignment: .leading, spacing: 6) {
+                Text(card.name)
+                    .font(.headline)
+                HStack {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text(card.dueDate)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 }
-                .padding([.leading, .vertical], 12)
-
-                Spacer()
+                Text("Priority: \(card.priority)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                if !card.notes.isEmpty {
+                    Text("Notes: \(card.notes)")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
             }
+            .padding([.leading, .vertical], 12)
+            .padding(.leading, 12)
+
         }
-        .frame(width: 350, height: 80)
-        // Move the card based on the current horizontal drag offset only
-        .offset(x: offset.width, y: offset.height)
+        .frame(width: 350, height: 120)
+        .offset(x: offset.width, y: 0)   // Lock vertical offset to 0
         .gesture(
             DragGesture()
                 .onChanged { gesture in
-                    // Restrict movement to horizontal only
                     offset.width = gesture.translation.width
-                    offset.height = 0
                 }
                 .onEnded { _ in
-                    // Check if we swiped far enough to the right
                     if offset.width > 100 {
                         print("Right swiped: \(card.name)")
-                        // In future, remove the card or perform another action
-                    }
-                    // Check if we swiped far enough to the left
-                    else if offset.width < -100 {
+                        // Potentially remove or mark as done
+                    } else if offset.width < -100 {
                         print("Left swiped: \(card.name)")
-                        // Handle left swipe action
+                        // Potentially snooze or do something else
                     }
-
-                    // Animate card back to original position
                     withAnimation {
                         offset = .zero
                     }
                 }
         )
-        // On long press, highlight the card + show confirmation alert
+        // Long press to highlight + show confirm alert
         .onLongPressGesture {
             withAnimation {
                 isPendingDelete = true
             }
         }
-        // Confirmation Alert
         .alert("Confirm Deletion",
                isPresented: $isPendingDelete,
                actions: {
@@ -177,9 +176,8 @@ struct TaskCardView: View {
                     isPendingDelete = false
                 }
             }
-        },
-               message: {
-            Text("Are you sure you want to delete this card?")
+        }, message: {
+            Text("Are you sure you want to delete this task?")
         })
     }
 }
