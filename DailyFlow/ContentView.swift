@@ -90,6 +90,9 @@ struct TaskCardView: View {
     // Tracks the card’s position as the user drags/swipes
     @State private var offset: CGSize = .zero
 
+    // Tracks whether the user has triggered the "pending delete" state
+    @State private var isPendingDelete: Bool = false
+
     var body: some View {
         ZStack(alignment: .leading) {
             // Left accent bar for style / priority cue
@@ -102,6 +105,12 @@ struct TaskCardView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white)
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
+                // Red border & scale effect if card is pending deletion
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(isPendingDelete ? Color.red : Color.clear, lineWidth: 3)
+                )
+                .scaleEffect(isPendingDelete ? 1.05 : 1.0)
 
             // Card Content
             HStack(spacing: 12) {
@@ -132,7 +141,7 @@ struct TaskCardView: View {
                     offset.width = gesture.translation.width
                     offset.height = 0
                 }
-                .onEnded { gesture in
+                .onEnded { _ in
                     // Check if we swiped far enough to the right
                     if offset.width > 100 {
                         print("Right swiped: \(card.name)")
@@ -150,10 +159,28 @@ struct TaskCardView: View {
                     }
                 }
         )
-        // Long press to delete
+        // On long press, highlight the card + show confirmation alert
         .onLongPressGesture {
-            onDelete()
+            withAnimation {
+                isPendingDelete = true
+            }
         }
+        // Confirmation Alert
+        .alert("Confirm Deletion",
+               isPresented: $isPendingDelete,
+               actions: {
+            Button("Delete", role: .destructive) {
+                onDelete()
+            }
+            Button("Cancel", role: .cancel) {
+                withAnimation {
+                    isPendingDelete = false
+                }
+            }
+        },
+               message: {
+            Text("Are you sure you want to delete this card?")
+        })
     }
 }
 
