@@ -83,7 +83,7 @@ struct ProgressSummaryCard: View {
                                 progress: completionRatio,
                                 lineWidth: 8,
                                 foregroundColor: .white,
-                                backgroundColor: .white.opacity(0.3)
+                                backgroundColor: .white.opacity(0.4)
                             )
                             .frame(width: 70, height: 70)
                             
@@ -112,10 +112,11 @@ struct ProgressSummaryCard: View {
                             .frame(width: 70, height: 70)
                             .clipShape(Circle())
                             .tint(.white)
-                            .padding(.horizontal, 35)
                     }
                 }
                 .buttonStyle(WhiteOutlineCircleButtonStyle())
+                .padding(.trailing, 30)
+
 
                 Divider()
                     .background(Color.white.opacity(0.3))
@@ -126,7 +127,7 @@ struct ProgressSummaryCard: View {
                     .foregroundColor(.white.opacity(0.9))
                     .offset(y: -3)
             }
-            .padding(.leading, 16)
+            .padding(.leading, 25)
             .padding(.top, 16)
         }
     }

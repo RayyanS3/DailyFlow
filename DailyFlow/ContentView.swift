@@ -13,26 +13,24 @@ struct ContentView: View {
     @State private var horizontalFilter: HorizontalFilter = .all
 
     var body: some View {
+        TopNavBar()
         ZStack {
-            Color(.systemGray6).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                TopNavBar()
-
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        ProgressSummaryCard(tasks: tasks)
-                            .padding(.horizontal)
-
-                        taskFilterSection
-
+                
+                VStack(alignment: .leading, spacing: 24) {
+                    ProgressSummaryCard(tasks: tasks)
+                        .padding(.horizontal)
+                    
+                    taskFilterSection
+                    
+                    ScrollView{
                         taskList
                     }
-                    .padding(.top, 16)
-                    .padding(.bottom, 80)
                 }
-
-                BottomNavBar(showingAddTaskView: $showingAddTaskView)
+                .padding(.top, 16)
+                .padding(.bottom, 80)
+                
             }
         }
         .sheet(isPresented: $showingAddTaskView) {
@@ -40,6 +38,7 @@ struct ContentView: View {
                 tasks.append(newTask)
             }
         }
+        BottomNavBar(showingAddTaskView: $showingAddTaskView)
     }
 
     // MARK: - Task Filter Section

@@ -12,12 +12,12 @@ struct WhiteOutlineCircleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             // Slightly shrink and dim when pressed
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.75 : 1.0)
             // White circular outline
             .overlay(
                 Circle()
-                    .stroke(Color.white, lineWidth: 2)
+                    .stroke(Color.white, lineWidth: 2).opacity(0.75)
             )
     }
 }

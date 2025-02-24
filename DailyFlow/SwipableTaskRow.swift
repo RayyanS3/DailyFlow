@@ -19,13 +19,13 @@ struct SwipableTaskRow: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(AppColors.colorTwo).opacity(0.25)
                 .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
 
             HStack {
                 // Left icon
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white)
+                    .fill(AppColors.colorTwo).opacity(0.0)
                     .frame(width: 40, height: 40)
                     .overlay(
                         icon
@@ -39,7 +39,7 @@ struct SwipableTaskRow: View {
                         .font(.subheadline)
                     Text(task.dueDate)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.colorTwo)
                 }
                 Spacer()
                 

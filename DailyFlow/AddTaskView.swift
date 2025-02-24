@@ -15,59 +15,58 @@ struct AddTaskView: View {
     @State private var selectedDate: Date = Date()
     @State private var priority: String = "Medium"
     @State private var notes: String = ""
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     private let priorityOptions = ["Low", "Medium", "High"]
 
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Task Details")) {
-                    TextField("Task Name", text: $name)
-                    
-                    DatePicker("Due Date & Time",
-                               selection: $selectedDate,
-                               displayedComponents: [.date, .hourAndMinute])
-                    
-                    Picker("Priority", selection: $priority) {
-                        ForEach(priorityOptions, id: \.self) { option in
-                            Text(option).tag(option)
-                        }
+                TextField("Task Name", text: $name)
+
+                DatePicker(
+                    "Due Date & Time",
+                    selection: $selectedDate,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+
+                Picker("Priority", selection: $priority) {
+                    ForEach(priorityOptions, id: \.self) { option in
+                        Text(option).tag(option)
                     }
-                    .pickerStyle(.segmented)
                 }
-                
+                .pickerStyle(.segmented)
+
                 Section(header: Text("Notes (Optional)")) {
                     TextEditor(text: $notes)
-                        .frame(height: 120)
+                        .frame(height: 100)
                 }
             }
             .navigationTitle("Add Task")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .bottomBar) {
                     Button("Save") {
                         let formatter = DateFormatter()
                         formatter.dateStyle = .medium
                         formatter.timeStyle = .short
-                        
+
                         let newTask = CardObject(
                             name: name.isEmpty ? "Untitled Task" : name,
                             dueDate: formatter.string(from: selectedDate),
                             priority: priority,
                             notes: notes
                         )
-                        
+
                         onSave(newTask)
                         dismiss()
                     }
                 }
             }
         }
+        // The modifiers below create a sheet with rounded top edges and a drag handle:
+        .presentationDetents([.large])              // can also use [.medium, .large]
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(45)
     }
 }

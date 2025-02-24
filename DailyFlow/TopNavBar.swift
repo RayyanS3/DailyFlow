@@ -12,13 +12,10 @@ struct TopNavBar: View {
     var body: some View {
         ZStack {
             HStack {
-                Spacer()
-
                 Text("DailyFlow")
-                    .font(.headline)
-                    .padding(.leading, 20)
+                    .font(.title2)
                     .foregroundStyle(Color.white)
-                    .offset(y: 10)
+                    .bold()
 
                 Spacer()
 
@@ -33,9 +30,10 @@ struct TopNavBar: View {
                         .tint(.white)
                 }
             }
-            .padding(.horizontal, 40)
-            .padding(.top, -20)
-            .padding(.bottom, 20)
+            .padding(.trailing, 30)
+            .padding(.leading, 23)
+            .padding(.top, -25)
+            .padding(.bottom, 15)
         }
         .background(LinearGradient(
             gradient: Gradient(colors: [
