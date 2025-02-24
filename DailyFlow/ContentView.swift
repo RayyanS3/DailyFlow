@@ -14,31 +14,21 @@ struct ContentView: View {
 
     var body: some View {
         TopNavBar()
-        ZStack {
+        ProgressSummaryCard(tasks: tasks)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+        
+            taskFilterSection
+            ScrollView{
+                taskList
+            }
+            .padding(.top, 8)
+            .padding(.bottom, 0)
+            .sheet(isPresented: $showingAddTaskView) {
+                AddTaskView { newTask in tasks.append(newTask)}
+            }
+        BottomNavBar(showingAddTaskView: $showingAddTaskView).ignoresSafeArea(edges: .bottom)
 
-            VStack(spacing: 0) {
-                
-                VStack(alignment: .leading, spacing: 24) {
-                    ProgressSummaryCard(tasks: tasks)
-                        .padding(.horizontal)
-                    
-                    taskFilterSection
-                    
-                    ScrollView{
-                        taskList
-                    }
-                }
-                .padding(.top, 16)
-                .padding(.bottom, 80)
-                
-            }
-        }
-        .sheet(isPresented: $showingAddTaskView) {
-            AddTaskView { newTask in
-                tasks.append(newTask)
-            }
-        }
-        BottomNavBar(showingAddTaskView: $showingAddTaskView)
     }
 
     // MARK: - Task Filter Section

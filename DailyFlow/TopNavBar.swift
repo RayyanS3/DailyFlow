@@ -35,15 +35,7 @@ struct TopNavBar: View {
             .padding(.top, -25)
             .padding(.bottom, 15)
         }
-        .background(LinearGradient(
-            gradient: Gradient(colors: [
-                AppColors.colorOne,
-                AppColors.colorTwo,
-                AppColors.colorFour
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        ))
+        .background(AppColors.colorTwo)
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
 }
