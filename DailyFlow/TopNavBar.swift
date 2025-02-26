@@ -26,13 +26,13 @@ struct TopNavBar: View {
                     Image(systemName: "bell")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 30, height: 30)
+                        .frame(width: 25, height: 25)
                         .tint(.white)
                 }
             }
-            .padding(.trailing, 30)
-            .padding(.leading, 23)
-            .padding(.top, -25)
+            .padding(.trailing, 12)
+            .padding(.leading, 20)
+            .padding(.top, -5)
             .padding(.bottom, 15)
         }
         .background(AppColors.colorTwo)
