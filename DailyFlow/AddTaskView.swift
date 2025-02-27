@@ -21,6 +21,7 @@ struct AddTaskView: View {
     private let priorityOptions = ["Low", "Medium", "High"]
 
     var body: some View {
+        
         NavigationView {
             Form {
                 TextField("Task Name", text: $name)
